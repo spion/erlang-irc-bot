@@ -15,7 +15,10 @@ OBJECTS := $(patsubst $(SRCDIR)/%.erl,$(OBJDIR)/%.beam,$(SOURCES))
 OBJDIRS := $(sort $(foreach a,$(OBJECTS),$(dir $a)))
 
 
-all: $(OBJDIRS) $(OBJECTS) $(OBJDIR)/ircbot.app
+all: ebin/plugins/prisutni.beam $(OBJDIRS) $(OBJECTS) $(OBJDIR)/ircbot.app
+
+ebin/plugins/prisutni.beam: extra/prisutni.erl
+	${ERLC} -o ebin/plugins -I deps/ejson/src extra/prisutni.erl
 
 $(OBJDIRS):
 	mkdir $@
@@ -31,7 +34,7 @@ clean:
 	rm -f erl_crash.dump
 
 run-shell:
-	@erl -sname ircbot -pa $(OBJDIR)
+	@erl -sname ircbot -pa $(OBJDIR) -pa deps/ejson/ebin -pa deps/ejson/deps/*/ebin
 
 
 # dialyzer support
