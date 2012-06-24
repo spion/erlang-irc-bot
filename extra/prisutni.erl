@@ -45,16 +45,13 @@ fetch(Url, Ref, Channel) ->
 
 fetcher(Url, Callback) ->
     Headers = [{"User-Agent", "Mozilla/5.0 (erlang-irc-bot)"}],
-    io:format("Sending request ~n"),
     {ok, RequestId} = http:request(get, {Url, Headers}, [], [{sync, false}, {stream, self}]),
-    io:format("receive_chunk 01 ~n"),
     receive_chunk(RequestId, Callback, [], 1).
 
 %% callback function called as chunks from http are received
 %% when enough data is received (Len =< 0) process the json
 
 receive_chunk(_RequestId, Callback, Body, Len) when Len =< 0 ->
-    %io:format("receive_chunk end ~n"),
     {Json} = ejson:decode(Body),
     Count = proplists:get_value(<<"count">>, element(1, lists:last(proplists:get_value(<<"counters">>, Json)))),
     People = lists:map(fun(P) -> binary_to_list(proplists:get_value(<<"name">>, element(1, P))) end, proplists:get_value(<<"present">>, Json)),
@@ -65,15 +62,12 @@ receive_chunk(_RequestId, Callback, Body, Len) when Len =< 0 ->
 receive_chunk(RequestId, Callback, Body, Len)  ->
     receive
         {http,{RequestId, stream_start, Headers}} ->
-            io:format("receive_chunk 02 ~n"),
             receive_chunk(RequestId, Callback, Body, 1);
 
         {http,{RequestId, stream, Data}} ->
-            io:format("receive_chunk 03 ~n"),
             receive_chunk(RequestId, Callback, Body ++ [Data], 1);
 
         {http,{RequestId, stream_end, Headers}} ->
-            io:format("receive_chunk 04 ~n"),
             receive_chunk(RequestId, Callback, Body, 0)
     end.
 
